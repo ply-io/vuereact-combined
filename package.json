@@ -1,7 +1,7 @@
 {
-  "name": "vuereact-combined",
+  "name": "@ply-io/vuereact-combined",
   "private": false,
-  "version": "1.2.11",
+  "version": "1.2.12",
   "description": "Vue和React快捷集成的工具包，并且适合复杂的集成场景",
   "main": "dist/vuereact.umd.js",
   "module": "dist/vuereact.esm.js",
@@ -11,18 +11,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devilwjp/vuereact-combined.git"
+    "url": "git+https://github.com/ply-io/vuereact-combined.git"
   },
   "author": "Devle Wu",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/devilwjp/vuereact-combined/issues"
+    "url": "https://github.com/ply-io/vuereact-combined/issues"
   },
   "files": [
     "dist",
     "types"
   ],
-  "homepage": "https://github.com/devilwjp/vuereact-combined#readme",
+  "homepage": "https://github.com/ply-io/vuereact-combined#readme",
   "peerDependencies": {
     "react": ">= 16.3.0",
     "react-dom": ">= 16.3.0",

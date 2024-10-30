@@ -14,17 +14,24 @@ const domTopObject = { Document: {}, Element: {} }
 function overwriteDomMethods(refDom) {
   Object.keys(domTopObject).forEach((key) => {
     domMethods.forEach((method) => {
-      const old = window[key].prototype[method]
+      const old = domTopObject[key][method] || window[key].prototype[method]
+      if (!old) return
       domTopObject[key][method] = old
       window[key].prototype[method] = function (...args) {
         const oldResult = old.apply(this, args)
-        if ((oldResult && oldResult.constructor !== NodeList) || (oldResult && oldResult.constructor === NodeList && oldResult.length > 0)) return oldResult
-        return Element.prototype[method].apply(refDom, args)
+        if (oldResult && (oldResult.constructor !== NodeList || (oldResult.constructor === NodeList && oldResult.length > 0))) return oldResult
+        // If each function of Document is called using apply, an error will occur. Here you need to use the native function of Element.
+        let currentMethod = method
+        if (currentMethod === 'getElementById') {
+          currentMethod = 'querySelector'
+          args = ['#' + args[0]]
+        }
+        const nativeElementFn = domTopObject.Element[currentMethod] || Element.prototype[currentMethod]
+        return nativeElementFn.apply(refDom, args)
       }
     })
   })
 }
-// 恢复原生方法
 function recoverDomMethods() {
   Object.keys(domTopObject).forEach((key) => {
     domMethods.forEach((method) => {
@@ -32,6 +39,7 @@ function recoverDomMethods() {
     })
   })
 }
+
 
 class FunctionComponentWrap extends React.Component {
   constructor(props) {
@@ -102,8 +110,8 @@ const createReactContainer = (Component, options, wrapInstance) => class applyRe
         // 这里对包囊层属性进行透传，透传条件为children中只有一个vnode
         if (children?.length === 1 && children[0]?.data) {
           // 过滤掉内部属性
-          const {key, ['data-passed-props']:dataPassedProps, ...otherAttrs} = this.$attrs
-          children[0].data.attrs = {...otherAttrs, ...children[0].data.attrs}
+          const { key, ['data-passed-props']: dataPassedProps, ...otherAttrs } = this.$attrs
+          children[0].data.attrs = { ...otherAttrs, ...children[0].data.attrs }
         }
         return createElement(options.react.slotWrap, { attrs, style }, children)
       },
@@ -215,7 +223,7 @@ const createReactContainer = (Component, options, wrapInstance) => class applyRe
     if ((Object.getPrototypeOf(Component) !== Function.prototype && !(typeof Component === "object" && !Component.render)) || applyReact.catchVueRefs()) {
       return (
         <Component {...newProps}
-                   {...{ "data-passed-props": __passedProps }} {...refInfo}>
+          {...{ "data-passed-props": __passedProps }} {...refInfo}>
           {children || newProps.children}
         </Component>
       )
@@ -288,7 +296,7 @@ export default function applyReactInVue(component, options = {}) {
               if (typeof vnode.data.scopedSlots[key] === "function") {
                 try {
                   vnode.data.scopedSlots[key]()
-                } catch (e) {}
+                } catch (e) { }
               }
             })
           }
@@ -306,7 +314,7 @@ export default function applyReactInVue(component, options = {}) {
         Object.keys(this.$scopedSlots).forEach((key) => {
           try {
             this.$scopedSlots[key]()
-          } catch (e) {}
+          } catch (e) { }
         })
       },
       updateLastVnodeData(vnode) {
@@ -500,7 +508,7 @@ export default function applyReactInVue(component, options = {}) {
         const compareLast = {
           slot: () => {
             this.last.slot = {
-              ...(children ? { children } : {children: null}),
+              ...(children ? { children } : { children: null }),
               ...lastNormalSlots,
               ...scopedSlots,
             }
@@ -699,13 +707,13 @@ export default function applyReactInVue(component, options = {}) {
     },
     updated() {
       // if (this.attrsUpdated) return
-      this.mountReactComponent(true, {slot: true})
+      this.mountReactComponent(true, { slot: true })
     },
     inheritAttrs: false,
     watch: {
       $attrs: {
         handler() {
-          this.mountReactComponent(true, {attrs: true})
+          this.mountReactComponent(true, { attrs: true })
           // this.attrsUpdated = true
           // Promise.resolve().then(() => {
           //   this.attrsUpdated = false
@@ -715,13 +723,13 @@ export default function applyReactInVue(component, options = {}) {
       },
       $listeners: {
         handler() {
-          this.mountReactComponent(true, {listeners: true})
+          this.mountReactComponent(true, { listeners: true })
         },
         deep: true,
       },
       "$props.dataPassedProps": {
         handler() {
-          this.mountReactComponent(true, {passedProps: true})
+          this.mountReactComponent(true, { passedProps: true })
         },
         deep: true,
       },
